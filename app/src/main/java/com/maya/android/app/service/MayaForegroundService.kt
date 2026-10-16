@@ -100,7 +100,7 @@ class MayaForegroundService : Service() {
             initialize(this@MayaForegroundService)
         }
 
-        audioOutputManager = AudioOutputManager()
+        audioOutputManager = AudioOutputManager(this)
 
         val phoneExecutor = PhoneToolExecutor(this, prefs) { confirmation ->
             pendingConfirmationFlow.value = confirmation
@@ -223,6 +223,24 @@ class MayaForegroundService : Service() {
             val memorySummary = memories.take(6).joinToString("\n") { "- ${it.fact}" }
             geminiClient.startSession(serviceScope, memoryContext = memorySummary)
         }
+    }
+
+    fun queryPrompt(text: String) {
+        userTranscriptFlow.value = text
+        mayaTranscriptFlow.value = ""
+        serviceScope.launch(Dispatchers.IO) {
+            val memories = (application as MayaApplication).database.memoryDao().getAllMemories()
+            val memorySummary = memories.take(6).joinToString("\n") { "- ${it.fact}" }
+            geminiClient.queryGeminiRest(text, memorySummary)
+        }
+    }
+
+    fun speakDirectly(text: String) {
+        val isJarvis = prefs.activeMode == PreferencesManager.MODE_JARVIS
+        val voice = com.maya.android.app.ai.VoiceDirectory.findVoice(
+            if (isJarvis) prefs.jarvisVoice else prefs.girlfriendVoice
+        )
+        audioOutputManager.speakText(text, voice.pitch, voice.speechRate)
     }
 
     fun stopLiveSession() {

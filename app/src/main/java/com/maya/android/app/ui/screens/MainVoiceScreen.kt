@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,27 +22,33 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -73,6 +80,8 @@ fun MainVoiceScreen(
     pendingConfirmation: PendingActionConfirmation?,
     onToggleMode: () -> Unit,
     onMicClick: () -> Unit,
+    onSendPrompt: (String) -> Unit,
+    onTestVoice: () -> Unit,
     onStopAllActions: () -> Unit,
     onConfirmAction: () -> Unit,
     onCancelAction: () -> Unit,
@@ -83,12 +92,23 @@ fun MainVoiceScreen(
 ) {
     val accentColor = if (isGirlfriendMode) GirlfriendPink else JarvisCyan
     val listState = rememberLazyListState()
+    var inputText by remember { mutableStateOf("") }
+    val quickChipsScroll = rememberScrollState()
 
     LaunchedEffect(mayaTranscript) {
         if (mayaTranscript.isNotBlank()) {
             listState.animateScrollToItem(0)
         }
     }
+
+    val quickQuestions = listOf(
+        "Kaise ho Maya?",
+        "What can you do?",
+        "Remind me in 10 minutes",
+        "Turn on flashlight",
+        "Tell me a fun fact",
+        "Switch to ${if (isGirlfriendMode) "Jarvis" else "Girlfriend"} mode"
+    )
 
     Box(
         modifier = Modifier
@@ -100,7 +120,7 @@ fun MainVoiceScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -197,16 +217,16 @@ fun MainVoiceScreen(
                     modifier = Modifier.testTag("voice_orb")
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // State indicator text
                 val stateText = when (liveState) {
-                    LiveState.IDLE -> "Say \"Hey Maya\" or tap to talk"
+                    LiveState.IDLE -> "Say \"Hey Maya\" or tap mic to speak"
                     LiveState.CONNECTING -> "Connecting to Gemini Live..."
-                    LiveState.LISTENING -> "Listening to you..."
+                    LiveState.LISTENING -> "Listening to you... Boliye!"
                     LiveState.THINKING -> "Thinking..."
-                    LiveState.SPEAKING -> "Maya is speaking..."
-                    LiveState.ERROR -> "Session error"
+                    LiveState.SPEAKING -> "Maya bol rahi hai..."
+                    LiveState.ERROR -> "Session error - tap mic to reconnect"
                 }
 
                 Text(
@@ -218,7 +238,7 @@ fun MainVoiceScreen(
                 )
 
                 if (statusMessage.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = statusMessage,
                         color = TextSecondary,
@@ -239,14 +259,14 @@ fun MainVoiceScreen(
 
                 // Live Transcript Box (if active)
                 if (mayaTranscript.isNotBlank() || userTranscript.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(110.dp)
+                            .height(115.dp)
                             .background(DarkSurfaceVariant.copy(alpha = 0.85f), RoundedCornerShape(16.dp))
                             .border(1.dp, accentColor.copy(alpha = 0.25f), RoundedCornerShape(16.dp))
-                            .padding(14.dp)
+                            .padding(12.dp)
                     ) {
                         LazyColumn(
                             state = listState,
@@ -260,7 +280,7 @@ fun MainVoiceScreen(
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium
                                     )
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
                                 }
                             }
                             if (mayaTranscript.isNotBlank()) {
@@ -278,11 +298,99 @@ fun MainVoiceScreen(
                 }
             }
 
-            // 3. BOTTOM CONTROLS
+            // 3. QUICK SUGGESTION CHIPS
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
+                    .horizontalScroll(quickChipsScroll)
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                quickQuestions.forEach { prompt ->
+                    Box(
+                        modifier = Modifier
+                            .background(DarkSurface, RoundedCornerShape(14.dp))
+                            .border(1.dp, accentColor.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+                            .clickable {
+                                onSendPrompt(prompt)
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = prompt,
+                            color = TextPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            // 4. DIRECT QUERY / CHAT INPUT BAR
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    placeholder = { Text("Ask or command Maya in Hinglish...", color = TextTertiary, fontSize = 13.sp) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accentColor,
+                        unfocusedBorderColor = DarkSurfaceVariant,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    trailingIcon = {
+                        if (inputText.isNotBlank()) {
+                            IconButton(
+                                onClick = {
+                                    val text = inputText.trim()
+                                    if (text.isNotBlank()) {
+                                        onSendPrompt(text)
+                                        inputText = ""
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = "Send",
+                                    tint = accentColor
+                                )
+                            }
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                // Voice Test Button
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(DarkSurfaceVariant, CircleShape)
+                        .clickable { onTestVoice() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.VolumeUp,
+                        contentDescription = "Test Voice",
+                        tint = accentColor,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+
+            // 5. BOTTOM CONTROL BUTTONS
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -292,7 +400,7 @@ fun MainVoiceScreen(
                         .background(DarkSurface, RoundedCornerShape(20.dp))
                         .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
                         .clickable { onToggleMode() }
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
                         .testTag("mode_toggle_button")
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -300,13 +408,13 @@ fun MainVoiceScreen(
                             imageVector = if (isGirlfriendMode) Icons.Default.Favorite else Icons.Default.Bolt,
                             contentDescription = "Switch Mode",
                             tint = accentColor,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = if (isGirlfriendMode) "Jarvis Mode" else "Girlfriend Mode",
                             color = TextPrimary,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -319,7 +427,7 @@ fun MainVoiceScreen(
                     contentColor = AmoledBackground,
                     shape = CircleShape,
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(60.dp)
                         .testTag("main_mic_button")
                 ) {
                     Icon(
@@ -335,7 +443,7 @@ fun MainVoiceScreen(
                         .background(DarkSurface, RoundedCornerShape(20.dp))
                         .border(1.dp, Color(0xFFFF3D00).copy(alpha = 0.4f), RoundedCornerShape(20.dp))
                         .clickable { onStopAllActions() }
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
                         .testTag("emergency_stop_button")
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -343,13 +451,13 @@ fun MainVoiceScreen(
                             imageVector = Icons.Default.Stop,
                             contentDescription = "Stop All Actions",
                             tint = Color(0xFFFF3D00),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Ruko / Stop",
                             color = Color(0xFFFF3D00),
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }

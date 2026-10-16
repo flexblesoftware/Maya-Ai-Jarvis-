@@ -247,6 +247,23 @@ fun MayaRoot(
                         MayaForegroundService.startService(activity)
                     }
                 },
+                onSendPrompt = { promptText ->
+                    val svc = getService()
+                    if (svc != null) {
+                        svc.queryPrompt(promptText)
+                    } else {
+                        MayaForegroundService.startService(activity)
+                    }
+                },
+                onTestVoice = {
+                    val svc = getService()
+                    val testMsg = if (isGirlfriendMode) {
+                        "Haanji baby! Main bilkul theek hoon aur aapki aawaaz sun rahi hoon."
+                    } else {
+                        "All voice and speech systems are operational, sir. Standing by."
+                    }
+                    svc?.speakDirectly(testMsg)
+                },
                 onStopAllActions = {
                     getService()?.abortAllAgentTasks()
                 },

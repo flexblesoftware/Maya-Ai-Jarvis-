@@ -57,6 +57,18 @@ class AudioInputManager(
                 bufferSize
             )
 
+            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+                Log.w("AudioInputManager", "VOICE_COMMUNICATION uninitialized, falling back to MIC")
+                audioRecord?.release()
+                audioRecord = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    SAMPLE_RATE,
+                    CHANNEL_CONFIG,
+                    AUDIO_FORMAT,
+                    bufferSize
+                )
+            }
+
             val audioSessionId = audioRecord?.audioSessionId ?: 0
             if (audioSessionId != 0) {
                 if (AcousticEchoCanceler.isAvailable()) {
