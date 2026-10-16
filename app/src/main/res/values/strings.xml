@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Maya</string>
+    <string name="accessibility_service_label">Maya Phone Agent</string>
+    <string name="accessibility_service_description">Enables Maya to read screen content, tap buttons, scroll, and assist with phone automation.</string>
+</resources>

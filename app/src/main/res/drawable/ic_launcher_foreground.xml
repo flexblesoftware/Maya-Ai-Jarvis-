@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer energy pulse ring -->
+    <path
+        android:strokeWidth="2.5"
+        android:pathData="M 54, 26 A 28,28 0 1 1 53.9, 26 Z">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="26"
+                android:startY="26"
+                android:endX="82"
+                android:endY="82"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00E5FF" />
+                <item android:offset="1.0" android:color="#FF4081" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Mid sound wave ring -->
+    <path
+        android:strokeWidth="3.0"
+        android:pathData="M 54, 34 A 20,20 0 1 1 53.9, 34 Z">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="34"
+                android:startY="34"
+                android:endX="74"
+                android:endY="74"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF4081" />
+                <item android:offset="1.0" android:color="#00E5FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Center core luminous sphere -->
+    <path
+        android:pathData="M 54, 42 A 12,12 0 1 1 53.9, 42 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="42"
+                android:startY="42"
+                android:endX="66"
+                android:endY="66"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="0.5" android:color="#00E5FF" />
+                <item android:offset="1.0" android:color="#FF4081" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Vertical AI voice waveform spikes -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,45 L54,63 M48,48 L48,60 M60,48 L60,60 M42,51 L42,57 M66,51 L66,57" />
+</vector>
